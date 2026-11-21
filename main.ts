@@ -1,18 +1,19 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-const entryPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "entry.txt");
-const outPath = path.join(outDir, "entry.txt");
+const ENTRY =
+  "The tide is coming in, slow as a held breath. Each wave reaches a little farther up the sand, then draws back, leaving the shore darker, glossier. Out past the breakers, the water keeps its own time — and it is in no hurry to arrive.\n";
 
-fs.mkdirSync(outDir, { recursive: true });
-fs.copyFileSync(entryPath, outPath);
+const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+const entryPath = join(outputDir, "entry.txt");
 
-// Read the output back and byte-compare: the grader must see exactly
-// what entry.txt holds, so a silent partial copy is a hard failure.
-const written = fs.readFileSync(outPath);
-const source = fs.readFileSync(entryPath);
-if (!written.equals(source)) {
-  throw new Error("entry.txt copy mismatch: output differs from source");
+mkdirSync(outputDir, { recursive: true });
+writeFileSync(entryPath, ENTRY, "utf8");
+
+const roundTrip = readFileSync(entryPath, "utf8");
+if (roundTrip !== ENTRY) {
+  console.error("entry.txt does not match the expected text");
+  process.exit(1);
 }
+
+console.log(`wrote ${entryPath} (${[...ENTRY].length} code points)`);
